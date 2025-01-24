@@ -31,6 +31,8 @@ dependencies {
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     implementation("edu.stanford.nlp:stanford-corenlp:4.5.8")
     implementation("edu.stanford.nlp:stanford-corenlp:4.5.8:models")
+    implementation("org.apache.poi:poi:5.4.0")
+    implementation("org.apache.poi:poi-scratchpad:5.4.0")
 }
 
 tasks.withType<Test> {
