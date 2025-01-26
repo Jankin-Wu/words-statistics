@@ -1,6 +1,5 @@
 package com.jankinwu.wordsstatistics.handler;
 
-import com.jankinwu.wordsstatistics.utils.FileUtil;
 import org.apache.poi.hwpf.HWPFDocument;
 import org.apache.poi.hwpf.extractor.WordExtractor;
 
@@ -16,11 +15,11 @@ import java.util.Objects;
  * @description 提取文本
  * @date 2025-01-24 16:47
  **/
-public class ExtractText {
+public class ExtractDocText {
 
     public static void main(String[] args) {
-        String inputDir = "D:\\Documents\\其他\\test"; // 输入目录路径
-        String outputDir = "D:\\Documents\\其他\\test"; // 输出目录路径
+        String inputDir = "D:\\Documents\\个人项目\\wordStatistics\\模拟试卷WORD"; // 输入目录路径
+        String outputDir = "D:\\Documents\\个人项目\\wordStatistics\\模拟试卷WORD"; // 输出目录路径
 
         File folder = new File(inputDir);
         processFolder(folder, outputDir);
@@ -48,9 +47,9 @@ public class ExtractText {
             String text = extractor.getText();
             String txtFileName = docFile.getName().replace(".doc", ".txt");
             File txtFile = new File(outputDir, txtFileName);
-            String filerText = FileUtil.processTextContent(text);
+//            String filerText = FileUtil.processTextContent(text);
             try (FileOutputStream fos = new FileOutputStream(txtFile)) {
-                fos.write(filerText.getBytes(StandardCharsets.UTF_8));
+                fos.write(text.getBytes(StandardCharsets.UTF_8));
             }
             System.out.println("Converted: " + docFile.getPath() + " to " + txtFile.getPath());
 //            System.out.println(filerText);

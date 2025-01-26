@@ -22,7 +22,7 @@ public class FilterUtil {
         }
 
         // 1. 移除 "A.", "B.", "C.", "D." 等标记
-        String filteredText = input.replaceAll("(?i)\\b[A-D]\\.", "").trim();
+        String filteredText = input.replaceAll("(?i)\\b[A-Z]\\.", "").trim();
 
         // 2. 移除系动词（is, am, are, was, were, isn't, aren't, etc.）
         filteredText = filteredText.replaceAll("\\b(is|am|are|was|were|isn't|aren't|wasn't|weren't|be|being|been|isn’t|aren’t|wasn’t|weren’t|won’t)\\b", "").trim();

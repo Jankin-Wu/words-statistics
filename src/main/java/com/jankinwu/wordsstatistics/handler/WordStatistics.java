@@ -1,5 +1,6 @@
 package com.jankinwu.wordsstatistics.handler;
 
+import com.jankinwu.wordsstatistics.dto.WordFrequencyDTO;
 import com.jankinwu.wordsstatistics.service.NlpService;
 import com.jankinwu.wordsstatistics.utils.FileUtil;
 import com.jankinwu.wordsstatistics.utils.FilterUtil;
@@ -12,6 +13,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -66,29 +68,37 @@ public class WordStatistics {
     @PostConstruct
     public void countWordFrequency() {
         // 输入的文本
-        String text = FileUtil.readTextFile("D:\\Documents\\其他\\test\\上海市宝山区2017届高三上学期教学质量检测（一模）英语试题及答案（word版）.txt");
+        String text = FileUtil.readTextFile("D:\\Documents\\个人项目\\wordStatistics\\小猫钓鱼.txt");
         // 过滤掉脏数据
         String filteredText = FilterUtil.filterDirtyData(text);
-        // 统计单词频率
-        Map<String, Integer> wordFrequency = nlpService.countSpecificWordFrequency(filteredText);
+        // 统计单词频率，并返回包含单词、词性、频率的列表
+        List<WordFrequencyDTO> wordFrequencies = nlpService.countWordFrequency(filteredText);
+
+        // 将列表转换为 Map<String, Integer> 以过滤特定的键
+        Map<String, Integer> wordFrequencyMap = new HashMap<>();
+        wordFrequencies.forEach(wf -> wordFrequencyMap.put(wf.getWord(), wf.getFrequency()));
 
         // 过滤掉单词频率映射中特定的Key
-        FilterUtil.filterSpecificKeys(wordFrequency);
+        FilterUtil.filterSpecificKeys(wordFrequencyMap);
 
-        // 对单词频率降序排序
-        List<Map.Entry<String, Integer>> sortedWordFrequency = sortWordFrequency(wordFrequency);
+        // 排序WordFrequency列表
+        List<WordFrequencyDTO> sortedWordFrequencies = wordFrequencies.stream()
+                .filter(wf -> wordFrequencyMap.containsKey(wf.getWord())) // 过滤被移除的单词
+                .sorted((wf1, wf2) -> Integer.compare(wf2.getFrequency(), wf1.getFrequency()))
+                .toList();
 
         // 打印排序后的单词频率
         System.out.println("\n名词、动词、形容词、副词的单词频率统计（按频率降序排列）:");
-        sortedWordFrequency.forEach(entry -> System.out.printf("%s: %d\n", entry.getKey(), entry.getValue()));
-        File txtFile = new File("D:\\Documents\\其他\\test\\", "统计结果.txt");
+        sortedWordFrequencies.forEach(wf -> System.out.printf("%s %s: %d\n", wf.getWord(), getPosAbbreviation(wf.getPartOfSpeech()), wf.getFrequency()));
+
+        File txtFile = new File("D:\\Documents\\个人项目\\wordStatistics\\", "小猫钓鱼统计结果.txt");
         try {
             // 使用 FileOutputStream 写入文件
             try (FileOutputStream fos = new FileOutputStream(txtFile)) {
                 // 使用 StringBuilder 构建文件内容
                 StringBuilder content = new StringBuilder();
                 content.append("名词、动词、形容词、副词的单词频率统计（按频率降序排列）:\n");
-                sortedWordFrequency.forEach(entry -> content.append(String.format("%s: %d\n", entry.getKey(), entry.getValue())));
+                sortedWordFrequencies.forEach(wf -> content.append(String.format("%s %s: %d\n", wf.getWord(), getPosAbbreviation(wf.getPartOfSpeech()), wf.getFrequency())));
                 // 写入文件
                 fos.write(content.toString().getBytes(StandardCharsets.UTF_8));
             }
@@ -108,6 +118,34 @@ public class WordStatistics {
         // 按频率降序排序
         sortedList.sort((entry1, entry2) -> entry2.getValue().compareTo(entry1.getValue()));
         return sortedList;
+    }
+
+
+    public String getPosAbbreviation(String pos) {
+        switch (pos) {
+            case "NN":
+            case "NNS":
+            case "NNP":
+            case "NNPS":
+                return "n."; // 名词
+            case "VB":
+            case "VBD":
+            case "VBG":
+            case "VBN":
+            case "VBP":
+            case "VBZ":
+                return "v."; // 动词
+            case "JJ":
+            case "JJR":
+            case "JJS":
+                return "adj."; // 形容词
+            case "RB":
+            case "RBR":
+            case "RBS":
+                return "adv."; // 副词
+            default:
+                return pos; // 如果没有匹配项，返回原始标签
+        }
     }
 
 

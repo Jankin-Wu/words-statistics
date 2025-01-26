@@ -1,5 +1,5 @@
 package com.jankinwu.wordsstatistics.service;
-
+import com.jankinwu.wordsstatistics.dto.WordFrequencyDTO;
 import edu.stanford.nlp.pipeline.CoreDocument;
 import edu.stanford.nlp.pipeline.StanfordCoreNLP;
 import org.springframework.stereotype.Service;
@@ -124,6 +124,48 @@ public class NlpService {
 
         return wordFrequency;
     }
+
+    public List<WordFrequencyDTO> countWordFrequency(String text) {
+        Map<String, Map<String, Integer>> wordFrequencyMap = new HashMap<>();
+
+        // 处理文本并标注词性
+        CoreDocument document = new CoreDocument(text);
+        pipeline.annotate(document);
+
+        // 定义名词、动词、形容词、副词的POS标签集合
+        Set<String> nounTags = Set.of("NN", "NNS", "NNP", "NNPS");
+        Set<String> verbTags = Set.of("VB", "VBD", "VBG", "VBN", "VBP", "VBZ");
+        Set<String> adjTags = Set.of("JJ", "JJR", "JJS");
+        Set<String> advTags = Set.of("RB", "RBR", "RBS");
+
+        // 遍历文本中的每个单词及其词性
+        document.tokens().forEach(token -> {
+            String word = token.word().toLowerCase(); // 单词统一为小写
+            String pos = token.tag(); // 获取词性
+
+            // 仅统计名词、动词、形容词、副词
+            if (nounTags.contains(pos) || verbTags.contains(pos) || adjTags.contains(pos) || advTags.contains(pos)) {
+                wordFrequencyMap.putIfAbsent(word, new HashMap<>());
+                Map<String, Integer> posFrequency = wordFrequencyMap.get(word);
+                posFrequency.put(pos, posFrequency.getOrDefault(pos, 0) + 1);
+            }
+        });
+
+        // 将结果转换为List<WordFrequency>
+        List<WordFrequencyDTO> wordFrequencies = new ArrayList<>();
+        for (Map.Entry<String, Map<String, Integer>> entry : wordFrequencyMap.entrySet()) {
+            String word = entry.getKey();
+            Map<String, Integer> posMap = entry.getValue();
+            for (Map.Entry<String, Integer> posEntry : posMap.entrySet()) {
+                String pos = posEntry.getKey();
+                int frequency = posEntry.getValue();
+                wordFrequencies.add(new WordFrequencyDTO(word, pos, frequency));
+            }
+        }
+
+        return wordFrequencies;
+    }
+
 
 
 }
