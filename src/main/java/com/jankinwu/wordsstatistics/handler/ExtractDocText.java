@@ -11,15 +11,15 @@ import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 
 /**
- * @author 皖刚
+ * @author Jankin Wu
  * @description 提取文本
  * @date 2025-01-24 16:47
  **/
 public class ExtractDocText {
 
     public static void main(String[] args) {
-        String inputDir = "D:\\Documents\\个人项目\\wordStatistics\\模拟试卷WORD"; // 输入目录路径
-        String outputDir = "D:\\Documents\\个人项目\\wordStatistics\\模拟试卷WORD"; // 输出目录路径
+        String inputDir = "D:\\Documents\\其他\\test\\上海高考英语WORD"; // 输入目录路径
+        String outputDir = "D:\\Documents\\其他\\test\\上海高考英语TXT"; // 输出目录路径
 
         File folder = new File(inputDir);
         processFolder(folder, outputDir);

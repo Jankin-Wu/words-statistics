@@ -1,5 +1,6 @@
 package com.jankinwu.wordsstatistics.service;
 import com.jankinwu.wordsstatistics.dto.WordFrequencyDTO;
+import edu.stanford.nlp.ling.CoreLabel;
 import edu.stanford.nlp.pipeline.CoreDocument;
 import edu.stanford.nlp.pipeline.StanfordCoreNLP;
 import org.springframework.stereotype.Service;
@@ -19,6 +20,7 @@ public class NlpService {
     public NlpService() {
         Properties props = new Properties();
         props.setProperty("annotators", "tokenize,ssplit,pos");
+        props.setProperty("tokenize.language", "en");
         this.pipeline = new StanfordCoreNLP(props);
     }
 
@@ -166,6 +168,21 @@ public class NlpService {
         return wordFrequencies;
     }
 
+    public List<String> getWordsFromText(String text) {
+        // 创建包含文本的 CoreDocument
+        CoreDocument document = new CoreDocument(text);
 
+        // 使用管道处理文档
+        pipeline.annotate(document);
+
+        // 提取单词
+        List<CoreLabel> tokens = document.tokens();
+        List<String> words = new ArrayList<>();
+        for (CoreLabel token : tokens) {
+            String word = token.word();
+            words.add(word);
+        }
+        return words;
+    }
 
 }

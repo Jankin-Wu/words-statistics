@@ -4,7 +4,6 @@ import com.jankinwu.wordsstatistics.dto.WordFrequencyDTO;
 import com.jankinwu.wordsstatistics.service.NlpService;
 import com.jankinwu.wordsstatistics.utils.FileUtil;
 import com.jankinwu.wordsstatistics.utils.FilterUtil;
-import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -12,10 +11,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @description: 统计单词
@@ -65,8 +61,8 @@ public class WordStatistics {
         });
     }
 
-    @PostConstruct
-    public void countWordFrequency() {
+//    @PostConstruct
+    public void countWordFrequencySingleFile() {
         // 输入的文本
         String text = FileUtil.readTextFile("D:\\Documents\\个人项目\\wordStatistics\\小猫钓鱼.txt");
         // 过滤掉脏数据
@@ -83,7 +79,7 @@ public class WordStatistics {
 
         // 排序WordFrequency列表
         List<WordFrequencyDTO> sortedWordFrequencies = wordFrequencies.stream()
-                .filter(wf -> wordFrequencyMap.containsKey(wf.getWord())) // 过滤被移除的单词
+                .filter(wf -> wordFrequencyMap.containsKey(wf.getWord()))
                 .sorted((wf1, wf2) -> Integer.compare(wf2.getFrequency(), wf1.getFrequency()))
                 .toList();
 
@@ -95,6 +91,73 @@ public class WordStatistics {
         try {
             // 使用 FileOutputStream 写入文件
             try (FileOutputStream fos = new FileOutputStream(txtFile)) {
+                // 使用 StringBuilder 构建文件内容
+                StringBuilder content = new StringBuilder();
+                content.append("名词、动词、形容词、副词的单词频率统计（按频率降序排列）:\n");
+                sortedWordFrequencies.forEach(wf -> content.append(String.format("%s %s: %d\n", wf.getWord(), getPosAbbreviation(wf.getPartOfSpeech()), wf.getFrequency())));
+                // 写入文件
+                fos.write(content.toString().getBytes(StandardCharsets.UTF_8));
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    /**
+     * 统计指定目录下的txt文本中的单词频率
+     * @param directoryPath
+     * @throws IOException
+     */
+    public void countWordFrequencyInMergedFiles(String directoryPath) throws IOException {
+        // 获取目录中的所有txt文件
+        File directory = new File(directoryPath);
+        File[] txtFiles = directory.listFiles((dir, name) -> name.toLowerCase().endsWith(".txt"));
+
+        if (txtFiles == null || txtFiles.length == 0) {
+            System.out.println("No .txt files found in the directory.");
+            return;
+        }
+
+        // 合并所有文件内容
+        StringBuilder mergedText = new StringBuilder();
+        for (File txtFile : txtFiles) {
+            System.out.println("Reading file: " + txtFile.getName());
+            String text = FileUtil.readTextFile(txtFile.getAbsolutePath());
+            mergedText.append(text).append("\n"); // 添加换行符以分隔文件内容
+        }
+
+        // 过滤掉脏数据
+        String filteredText = FilterUtil.filterDirtyData(mergedText.toString());
+        filteredText = FilterUtil.processTextContent(filteredText);
+        // 统计单词频率，并返回包含单词、词性、频率的列表
+        List<WordFrequencyDTO> wordFrequencies = nlpService.countWordFrequency(filteredText);
+
+        String mapString = FileUtil.getStringFromTxt("D:\\Documents\\其他\\test\\CET-4高频词汇.txt");
+        List<String> mapList = Arrays.stream(mapString.split(", ")).toList();
+        List<WordFrequencyDTO> mapedList = wordFrequencies.stream().filter(wf -> mapList.contains(wf.getWord())).toList();
+
+        // 将列表转换为 Map<String, Integer> 以过滤特定的键
+//        Map<String, Integer> wordFrequencyMap = new HashMap<>();
+//        wordFrequencies.forEach(wf -> wordFrequencyMap.put(wf.getWord(), wf.getFrequency()));
+//
+//        // 过滤掉单词频率映射中特定的Key
+//        FilterUtil.filterSpecificKeys(wordFrequencyMap);
+
+        // 排序WordFrequency列表
+        List<WordFrequencyDTO> sortedWordFrequencies = mapedList.stream()
+//                .filter(wf -> wordFrequencyMap.containsKey(wf.getWord())) // 过滤被移除的单词
+                .sorted((wf1, wf2) -> Integer.compare(wf2.getFrequency(), wf1.getFrequency()))
+                .toList();
+
+        // 打印排序后的单词频率
+        System.out.println("\n名词、动词、形容词、副词的单词频率统计（按频率降序排列）:");
+        sortedWordFrequencies.forEach(wf -> System.out.printf("%s %s: %d\n", wf.getWord(), getPosAbbreviation(wf.getPartOfSpeech()), wf.getFrequency()));
+
+        // 输出结果到一个文件
+        File resultFile = new File(directoryPath, "上海高考英语高频词汇统计.txt");
+        try {
+            // 使用 FileOutputStream 写入文件
+            try (FileOutputStream fos = new FileOutputStream(resultFile)) {
                 // 使用 StringBuilder 构建文件内容
                 StringBuilder content = new StringBuilder();
                 content.append("名词、动词、形容词、副词的单词频率统计（按频率降序排列）:\n");

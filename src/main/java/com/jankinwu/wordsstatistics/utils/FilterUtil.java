@@ -1,7 +1,12 @@
 package com.jankinwu.wordsstatistics.utils;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.StringReader;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * @description: 过滤器工具类
@@ -41,5 +46,27 @@ public class FilterUtil {
     public static void filterSpecificKeys(Map<String, Integer> map) {
         Set<String> keysToRemove = Set.of("n’t", "'s");
         keysToRemove.forEach(map::remove);
+    }
+
+    public static String processTextContent(String textContent) {
+        try (BufferedReader reader = new BufferedReader(new StringReader(textContent))) {
+            List<String> lines = reader.lines().toList();
+            return lines.stream()
+                    .map(String::trim) // 去除每行开头和结尾的空格
+                    .map(line -> line.replaceAll("_+", " ")) // 将连续下划线替换为空格
+                    .filter(line -> !line.isEmpty()) // 去除空行
+                    // 去除以数字开头的行（题目序号）
+                    .filter(line -> !line.matches("^[0-9]+\\..*"))
+                    // 去除包含中文字符的行
+                    .filter(line -> !line.matches(".*[\u4e00-\u9fa5]+.*"))
+                    // 去除包含特定中文短语的行
+                    .filter(line -> !line.contains("考生注意"))
+                    // 去除章节标题和说明性文字
+                    .filter(line -> !line.matches("^(Section [A-Z]|Directions:|Questions \\d+ through \\d+|[IVXLCDM]+\\. .+).*"))
+                    .collect(Collectors.joining("\n"));
+        } catch (IOException e) {
+            e.printStackTrace();
+            return "Error processing content";
+        }
     }
 }
